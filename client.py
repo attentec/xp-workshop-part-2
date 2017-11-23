@@ -2,8 +2,6 @@ import math
 import pygame
 import sys
 
-empty = 255
-
 class Vector:
   def __init__(self, x, y):
     self.x = x
@@ -32,26 +30,26 @@ class Player:
       x = int(self.position.x + self.direction.x * move_speed)
       y = int(self.position.y)
 
-      if world_map.at(x, y) == empty: # TODO: Check first intersection instead (can walk through corners now)
+      if world_map.is_empty(x, y): # TODO: Check first intersection instead (can walk through corners now)
         self.position.x += self.direction.x * move_speed
 
       x = int(self.position.x)
       y = int(self.position.y + self.direction.y * move_speed)
 
-      if world_map.at(x, y) == empty:
+      if world_map.is_empty(x, y):
         self.position.y += self.direction.y * move_speed
 
     if keys_down & KEY_DOWN:
       x = int(self.position.x - self.direction.x * move_speed)
       y = int(self.position.y)
 
-      if world_map.at(x, y) == empty:
+      if world_map.is_empty(x, y):
         self.position.x -= self.direction.x * move_speed
 
       x = int(self.position.x)
       y = int(self.position.y - self.direction.y * move_speed)
 
-      if world_map.at(x, y) == empty:
+      if world_map.is_empty(x, y):
         self.position.y -= self.direction.y * move_speed
 
     if keys_down & KEY_RIGHT:
@@ -64,11 +62,13 @@ class Player:
 
 class Map:
   def __init__(self, surface):
-    self.__width = surface.get_size()[0]
-    self.__pixels = surface.get_buffer().raw
+    self.__surface = surface
 
-  def at(self, x, y):
-    return self.__pixels[y*self.__width + x]
+  def is_empty(self, x, y):
+    return self.color(x, y).a == 0
+
+  def color(self, x, y):
+    return self.__surface.get_at((x, y))
 
 def load_map(path):
   return Map(pygame.image.load(path))
@@ -82,14 +82,6 @@ KEY_LEFT = 0x000001
 
 ceiling_color = pygame.Color(0x33, 0x33, 0x33)
 floor_color = pygame.Color(0x55, 0x55, 0x55)
-
-colors = [
-  pygame.Color(0xff, 0, 0),
-  pygame.Color(0, 0xff, 0),
-  pygame.Color(0, 0, 0xff),
-  pygame.Color(0xff, 0xff, 0xff),
-  pygame.Color(0xff, 0xff, 0),
-]
 
 screen_width = 640
 screen_height = 480
@@ -159,7 +151,7 @@ def draw_world(screen, world_map, player):
         mapY += step_y
         side = 1
 
-      if world_map.at(mapX, mapY) != empty:
+      if not world_map.is_empty(mapX, mapY):
         hit = True
 
     if side == 0:
@@ -170,9 +162,7 @@ def draw_world(screen, world_map, player):
     line_height = abs(int(height / (perpendicular_wall_distance + epsilon)))
     start_y = max(0, (-line_height / 2) + (height / 2))
     end_y = min((line_height / 2) + (height / 2), height - 1)
-
-    color_index = min(world_map.at(mapX, mapY), len(colors) - 1)
-    color = colors[color_index]
+    color = world_map.color(mapX, mapY)
 
     if side == 1:
       color = pygame.Color(int(color.r / 2), int(color.g / 2), int(color.b / 2))
