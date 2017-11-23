@@ -2,6 +2,8 @@ import math
 import pygame
 import sys
 
+empty = 255
+
 class Vector:
   def __init__(self, x, y):
     self.x = x
@@ -15,11 +17,11 @@ class Vector:
 
 class Player:
   def __init__(self):
-    self.position = Vector(22, 12)
+    self.position = Vector(22, 13)
     self.direction = Vector(-1, 0)
     self.plane = Vector(0, 0.66)
 
-  def update(self, frame_time, keys_down):
+  def update(self, world_map, frame_time, keys_down):
     move_speed = frame_time * 5
     rotation_speed = frame_time * 3
 
@@ -30,26 +32,26 @@ class Player:
       x = int(self.position.x + self.direction.x * move_speed)
       y = int(self.position.y)
 
-      if world_map[x][y] == 0: # TODO: Check first intersection instead (can walk through corners now)
+      if world_map.at(x, y) == empty: # TODO: Check first intersection instead (can walk through corners now)
         self.position.x += self.direction.x * move_speed
 
       x = int(self.position.x)
       y = int(self.position.y + self.direction.y * move_speed)
 
-      if world_map[x][y] == 0:
+      if world_map.at(x, y) == empty:
         self.position.y += self.direction.y * move_speed
 
     if keys_down & KEY_DOWN:
       x = int(self.position.x - self.direction.x * move_speed)
       y = int(self.position.y)
 
-      if world_map[x][y] == 0:
+      if world_map.at(x, y) == empty:
         self.position.x -= self.direction.x * move_speed
 
       x = int(self.position.x)
       y = int(self.position.y - self.direction.y * move_speed)
 
-      if world_map[x][y] == 0:
+      if world_map.at(x, y) == empty:
         self.position.y -= self.direction.y * move_speed
 
     if keys_down & KEY_RIGHT:
@@ -60,39 +62,23 @@ class Player:
       self.direction = self.direction.rotate(rotation_speed)
       self.plane = self.plane.rotate(rotation_speed)
 
+class Map:
+  def __init__(self, surface):
+    self.__width = surface.get_size()[0]
+    self.__pixels = surface.get_buffer().raw
+
+  def at(self, x, y):
+    return self.__pixels[y*self.__width + x]
+
+def load_map(path):
+  return Map(pygame.image.load(path))
+
 epsilon = sys.float_info.epsilon
 
 KEY_UP = 0x000100
 KEY_DOWN = 0x001000
 KEY_RIGHT = 0x000010
 KEY_LEFT = 0x000001
-
-world_map = [
-  [ 4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,7,7,7,7,7,7,7,7 ],
-  [ 4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7 ],
-  [ 4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7 ],
-  [ 4,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7 ],
-  [ 4,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,7 ],
-  [ 4,0,4,0,0,0,0,5,5,5,5,5,5,5,5,5,7,7,0,7,7,7,7,7 ],
-  [ 4,0,5,0,0,0,0,5,0,5,0,5,0,5,0,5,7,0,0,0,7,7,7,1 ],
-  [ 4,0,6,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,0,0,0,8 ],
-  [ 4,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,7,1 ],
-  [ 4,0,8,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,0,0,0,8 ],
-  [ 4,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,7,0,0,0,7,7,7,1 ],
-  [ 4,0,0,0,0,0,0,5,5,5,5,0,5,5,5,5,7,7,7,7,7,7,7,1 ],
-  [ 6,6,6,6,6,6,6,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6 ],
-  [ 8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4 ],
-  [ 6,6,6,6,6,6,0,6,6,6,6,0,6,6,6,6,6,6,6,6,6,6,6,6 ],
-  [ 4,4,4,4,4,4,0,4,4,4,6,0,6,2,2,2,2,2,2,2,3,3,3,3 ],
-  [ 4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2 ],
-  [ 4,0,0,0,0,0,0,0,0,0,0,0,6,2,0,0,5,0,0,2,0,0,0,2 ],
-  [ 4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2 ],
-  [ 4,0,6,0,6,0,0,0,0,4,6,0,0,0,0,0,5,0,0,0,0,0,0,2 ],
-  [ 4,0,0,5,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,2,0,2,2 ],
-  [ 4,0,6,0,6,0,0,0,0,4,6,0,6,2,0,0,5,0,0,2,0,0,0,2 ],
-  [ 4,0,0,0,0,0,0,0,0,4,6,0,6,2,0,0,0,0,0,2,0,0,0,2 ],
-  [ 4,4,4,4,4,4,4,4,4,4,1,1,1,2,2,2,2,2,2,3,3,3,3,3 ],
-]
 
 ceiling_color = pygame.Color(0x33, 0x33, 0x33)
 floor_color = pygame.Color(0x55, 0x55, 0x55)
@@ -126,7 +112,7 @@ def draw_vertical_line(screen, x, start_y, end_y, color):
   destination = pygame.Rect(x, start_y, 1, end_y - start_y + 1)
   screen.fill(color, destination)
 
-def draw_world(screen, player):
+def draw_world(screen, world_map, player):
   width = screen_width
   height = screen_height
 
@@ -173,7 +159,7 @@ def draw_world(screen, player):
         mapY += step_y
         side = 1
 
-      if world_map[mapX][mapY] > 0:
+      if world_map.at(mapX, mapY) != empty:
         hit = True
 
     if side == 0:
@@ -185,7 +171,7 @@ def draw_world(screen, player):
     start_y = max(0, (-line_height / 2) + (height / 2))
     end_y = min((line_height / 2) + (height / 2), height - 1)
 
-    color_index = min(world_map[mapX][mapY] - 1, len(colors) - 1)
+    color_index = min(world_map.at(mapX, mapY), len(colors) - 1)
     color = colors[color_index]
 
     if side == 1:
@@ -226,7 +212,9 @@ def main(args):
   pygame.init()
   screen = pygame.display.set_mode((screen_width, screen_height))
 
+  world_map = load_map('world.png')
   player = Player()
+
   running = True
   keys_down = 0
   time = 0
@@ -241,8 +229,8 @@ def main(args):
     time = pygame.time.get_ticks()
     frame_time = (time - old_time) / 1000
 
-    draw_world(screen, player)
-    player.update(frame_time, keys_down)
+    draw_world(screen, world_map, player)
+    player.update(world_map, frame_time, keys_down)
 
     pygame.display.flip()
     pygame.time.wait(5)
