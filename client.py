@@ -71,7 +71,8 @@ class Map:
     return self.__surface.get_at((x, y))
 
 def load_map(path):
-  return Map(pygame.image.load(path))
+  surface = pygame.image.load(path)
+  return Map(pygame.transform.flip(surface, True, False))
 
 epsilon = sys.float_info.epsilon
 
