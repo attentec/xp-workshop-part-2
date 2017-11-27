@@ -7,10 +7,7 @@ from use_case import move_player, rotate_player
 
 def main(args):
   world_map = load_map(path='map')
-  player = Player(
-    position=Position(x=22.5, y=13.5), # TODO: Find player start with a special color?
-    forward=Direction(x=-1, y=0)
-  )
+  player = Player(position=world_map.spawn_position, forward=world_map.spawn_forward)
 
   root = os.path.dirname(os.path.realpath(__file__))
   objects = load_images_for_enum(os.path.join(root, 'objects'), Object)

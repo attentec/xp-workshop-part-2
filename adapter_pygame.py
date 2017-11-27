@@ -5,7 +5,7 @@ import numpy
 import os.path
 import pygame
 
-from domain import Color, Direction, smallest_number, find_first_collision, Input, LineSegment, Map, Material, Object, SquareSide
+from domain import Color, Direction, smallest_number, find_first_collision, Input, LineSegment, Map, Material, Object, Position, SquareSide
 
 pygame.init()
 
@@ -21,6 +21,12 @@ def _color_tuple_from_json(string):
 def _color_from_json(string):
   color = _color_tuple_from_json(string)
   return Color(red=color[0], green=color[1], blue=color[2])
+
+def _position_from_json(list):
+  return Position(list[0], list[1])
+
+def _direction_from_json(list):
+  return Direction(list[0], list[1])
 
 def _load_json_document(path):
   with open(path) as file:
@@ -47,13 +53,16 @@ def load_map(path):
   colors = _load_json_document(os.path.join(path, 'colors.json'))
   ceiling_color, floor_color = _color_from_json(colors['ceiling']), _color_from_json(colors['floor'])
 
+  spawn = _load_json_document(os.path.join(path, 'spawn.json'))
+  spawn_position, spawn_forward = _position_from_json(spawn['position']), _direction_from_json(spawn['forward'])
+
   color_to_material = _load_color_to_value_mapping(os.path.join(path, 'materials.json'), Material)
   color_to_object = _load_color_to_value_mapping(os.path.join(path, 'objects.json'), Object)
 
   materials, width = _load_map_layer(os.path.join(path, 'materials.png'), color_to_material)
   objects, _ = _load_map_layer(os.path.join(path, 'objects.png'), color_to_object)
 
-  return Map(ceiling_color, floor_color, materials, objects, width)
+  return Map(spawn_position, spawn_forward, ceiling_color, floor_color, materials, objects, width)
 
 def process_input(previous_input):
   running = True

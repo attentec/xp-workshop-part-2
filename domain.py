@@ -87,7 +87,8 @@ class Object(enum.Enum):
   KEY = 0
 
 class Map:
-  def __init__(self, ceiling_color, floor_color, materials, objects, width):
+  def __init__(self, spawn_position, spawn_forward, ceiling_color, floor_color, materials, objects, width):
+    self.spawn_position, self.spawn_forward = spawn_position, spawn_forward
     self.ceiling_color, self.floor_color = ceiling_color, floor_color
     self.__outside_color = Color(0, 0, 0)
     self.__materials, self.__objects, self.__width = materials, objects, width
