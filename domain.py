@@ -80,24 +80,35 @@ LineSegment = collections.namedtuple('LineSegment', [ 'start', 'end', ])
 Input = collections.namedtuple('Input', [ 'forward', 'backward', 'turn_left', 'turn_right', ])
 Player = collections.namedtuple('Player', [ 'position', 'forward', ])
 
+class Material(enum.Enum):
+  VOID = 0
+  DUMMY = 1
+
 class Map:
   def __init__(self, ceiling_color, floor_color, colors, width):
     self.ceiling_color, self.floor_color, self.__colors, self.__width = ceiling_color, floor_color, colors, width
     self.__outside_color = Color(0, 0, 0)
 
   def is_empty(self, position):
-    return self.color(position).alpha == 0
+    return self.__color(position).alpha == 0
 
-  def color(self, position):
-    grid_position = position.to_grid()
-    index = grid_position.y*self.__width + grid_position.x
+  def __color(self, position):
+    index = self.__to_index(position)
     return self.__colors[index] if index >= 0 and index < len(self.__colors) else self.__outside_color
+
+  def __to_index(self, position):
+    grid_position = position.to_grid()
+    return grid_position.y*self.__width + grid_position.x
+
+  def material(self, position):
+    index = self.__to_index(position)
+    return Material.DUMMY if index >= 0 and index < len(self.__colors) else Material.VOID
 
 class SquareSide(enum.Enum):
   HORIZONTAL = 0
   VERTICAL = 1
 
-Collision = collections.namedtuple('Collision', [ 'position', 'distance', 'side', ])
+Collision = collections.namedtuple('Collision', [ 'position', 'distance', 'wall', 'side', ])
 
 def find_first_collision(map, line_segment, debug=False):
   start, end = line_segment.start, line_segment.end
@@ -152,9 +163,11 @@ def find_first_collision(map, line_segment, debug=False):
     if not map.is_empty(position):
       if side == SquareSide.HORIZONTAL:
         distance = abs((x - start.x + (1 - step_x) / 2) / direction.x)
+        wall = start.y + distance * direction.y
       else:
         distance = abs((y - start.y + (1 - step_y) / 2) / direction.y)
+        wall = start.x + distance * direction.x
 
-      return Collision(position, distance, side)
+      return Collision(position, distance, wall, side)
 
   return None

@@ -1,6 +1,7 @@
+import os.path
 import sys
 
-from adapter_pygame import milliseconds_since_start, load_map, process_input, Renderer, wait
+from adapter_pygame import milliseconds_since_start, load_map, load_textures, process_input, Renderer
 from domain import Angle, Color, Direction, Input, Player, Position
 from use_case import move_player, rotate_player
 
@@ -15,12 +16,16 @@ def main(args):
     forward=Direction(x=-1, y=0)
   )
 
+  root = os.path.dirname(os.path.realpath(__file__))
+  textures = load_textures(os.path.join(root, 'textures'))
+
   renderer = Renderer(
     window_size=(640, 480),
+    textures=textures,
     field_of_view=Angle.from_degrees(66),
     draw_distance=100,
     far_color=Color(red=0, green=0, blue=0),
-    shade_scale=0.5
+    shade_scale=0.85
   )
   input = Input(
     forward=False,
@@ -45,8 +50,6 @@ def main(args):
     player = rotate_player(player, input, frame_time, rotation_speed)
     player = move_player(player, world_map, input, frame_time, movement_speed)
     renderer.draw(world_map, player)
-
-    wait(milliseconds=5)
 
   return 0
 
