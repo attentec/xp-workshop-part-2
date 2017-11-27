@@ -38,3 +38,7 @@ First you need to install Python and some tools and libraries. Do this once.
   * Windows:
     * `env/Scripts/activate.bat`
 * Then run the client like this: `python client.py`
+
+## Development
+
+Use https://github.com/khalim19/gimp-plugin-export-layers to export the layers of `map.xcf` into the `map` directory.

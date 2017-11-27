@@ -1,10 +1,11 @@
 import collections
+import json
 import math
-import os.path
 import numpy
+import os.path
 import pygame
 
-from domain import Color, Direction, smallest_number, find_first_collision, Input, LineSegment, Map, Material, SquareSide
+from domain import Color, Direction, smallest_number, find_first_collision, Input, LineSegment, Map, Material, Object, SquareSide
 
 pygame.init()
 
@@ -14,16 +15,46 @@ def _to_pygame_color(local_color):
 def _to_local_color(pygame_color):
   return Color(pygame_color.r, pygame_color.g, pygame_color.b, pygame_color.a)
 
-def load_map(ceiling_color, floor_color, path):
+def _color_tuple_from_json(string):
+  return tuple(map(lambda s: int(s.strip()), string.lstrip('(').rstrip(')').split(',', maxsplit=2)))
+
+def _color_from_json(string):
+  color = _color_tuple_from_json(string)
+  return Color(red=color[0], green=color[1], blue=color[2])
+
+def _load_json_document(path):
+  with open(path) as file:
+    return json.load(file)
+
+def _load_color_to_value_mapping(path, enum_class):
+  with open(path) as file:
+    document = json.load(file)
+    return { _color_tuple_from_json(color): enum_class(value) for color, value in document.items() }
+
+def _load_map_layer(path, color_to_value):
   surface = pygame.image.load(path)
   width, height = surface.get_width(), surface.get_height()
-  colors = [ None, ] * (width * height)
+  layer = [ None, ] * (width * height)
 
   for x in range(0, width):
     for y in range(0, height):
-      colors[y*width + x] = _to_local_color(surface.get_at((x, y)))
+      color = surface.get_at((x, y))
+      key = (int(color.r), int(color.g), int(color.b))
+      layer[y*width + x] = color_to_value.get(key, None) if color.a > 0 else None
 
-  return Map(ceiling_color, floor_color, colors, width)
+  return layer, width
+
+def load_map(path):
+  colors = _load_json_document(os.path.join(path, 'colors.json'))
+  ceiling_color, floor_color = _color_from_json(colors['ceiling']), _color_from_json(colors['floor'])
+
+  color_to_material = _load_color_to_value_mapping(os.path.join(path, 'materials.json'), Material)
+  color_to_object = _load_color_to_value_mapping(os.path.join(path, 'objects.json'), Object)
+
+  materials, width = _load_map_layer(os.path.join(path, 'materials.png'), color_to_material)
+  objects, _ = _load_map_layer(os.path.join(path, 'objects.png'), color_to_object)
+
+  return Map(ceiling_color, floor_color, materials, objects, width)
 
 def process_input(previous_input):
   running = True
@@ -46,15 +77,15 @@ def process_input(previous_input):
 
   return (input, running)
 
-def load_textures(directory):
-  textures = {}
+def load_images_for_enum(directory, enum):
+  images = {}
 
-  for material in Material:
-    filename = '%s.png' % str(material.value)
+  for instance in enum:
+    filename = '%s.png' % str(instance.value)
     path = os.path.join(directory, filename)
-    textures[material] = pygame.image.load(path)
+    images[instance] = pygame.image.load(path)
 
-  return textures
+  return images
 
 _Size = collections.namedtuple('_Size', [ 'width', 'height', ])
 
@@ -83,15 +114,16 @@ def _darken_surface(surface, scale):
   return surface
 
 class Renderer:
-  def __init__(self, window_size, textures, field_of_view, draw_distance, far_color, shade_scale):
+  def __init__(self, window_size, materials, objects, field_of_view, draw_distance, far_color, shade_scale):
     self.__screen = pygame.display.set_mode(window_size)
     self.__size = _Size(self.__screen.get_width(), self.__screen.get_height())
     self.__buffer = numpy.zeros(window_size, dtype=numpy.uint32)
     self.__field_of_view, self.__draw_distance = field_of_view, draw_distance
     self.__far_color, self.__shade_scale = self.__screen.map_rgb(_to_pygame_color(far_color)), shade_scale
 
-    self.__textures = { material: self.__convert_texture_to_array(texture) for material, texture in textures.items() }
-    self.__shaded_textures = { material: self.__convert_texture_to_array(_darken_surface(texture, shade_scale)) for material, texture in textures.items() }
+    self.__materials = { material: self.__convert_texture_to_array(texture) for material, texture in materials.items() }
+    self.__shaded_materials = { material: self.__convert_texture_to_array(_darken_surface(texture, shade_scale)) for material, texture in materials.items() }
+    self.__objects = objects
 
   def __convert_texture_to_array(self, texture):
     texture_in_screen_color_space = texture.convert()
@@ -145,8 +177,8 @@ class Renderer:
     x, y_start, height = rectangle.x, rectangle.y, rectangle.height
     y_end = y_start + rectangle.height
 
-    textures = self.__shaded_textures if use_shade else self.__textures
-    texture = textures[material]
+    materials = self.__shaded_materials if use_shade else self.__materials
+    texture = materials[material]
     texture_width, texture_height = texture.shape
 
     normalized_x = wall_x - math.floor(wall_x)

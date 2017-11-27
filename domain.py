@@ -30,9 +30,6 @@ class Color:
   def __str__(self):
     return '(red=%d, green=%d, blue=%d, alpha=%d)' % (self.red, self.green, self.blue, self.alpha)
 
-  def shade(self, scale):
-    return Color(int(scale * self.red), int(scale * self.green), int(scale * self.blue), self.alpha)
-
 class _Vector:
   def __init__(self, x, y):
     self.x, self.y = x, y
@@ -80,29 +77,35 @@ LineSegment = collections.namedtuple('LineSegment', [ 'start', 'end', ])
 Input = collections.namedtuple('Input', [ 'forward', 'backward', 'turn_left', 'turn_right', ])
 Player = collections.namedtuple('Player', [ 'position', 'forward', ])
 
+@enum.unique
 class Material(enum.Enum):
   VOID = 0
   DUMMY = 1
 
+@enum.unique
+class Object(enum.Enum):
+  KEY = 0
+
 class Map:
-  def __init__(self, ceiling_color, floor_color, colors, width):
-    self.ceiling_color, self.floor_color, self.__colors, self.__width = ceiling_color, floor_color, colors, width
+  def __init__(self, ceiling_color, floor_color, materials, objects, width):
+    self.ceiling_color, self.floor_color = ceiling_color, floor_color
     self.__outside_color = Color(0, 0, 0)
-
-  def is_empty(self, position):
-    return self.__color(position).alpha == 0
-
-  def __color(self, position):
-    index = self.__to_index(position)
-    return self.__colors[index] if index >= 0 and index < len(self.__colors) else self.__outside_color
+    self.__materials, self.__objects, self.__width = materials, objects, width
 
   def __to_index(self, position):
     grid_position = position.to_grid()
     return grid_position.y*self.__width + grid_position.x
 
+  def is_empty(self, position):
+    return self.material(position) is None
+
   def material(self, position):
     index = self.__to_index(position)
-    return Material.DUMMY if index >= 0 and index < len(self.__colors) else Material.VOID
+    return self.__materials[index] if index >= 0 and index < len(self.__materials) else Material.VOID
+
+  def object(self, position):
+    index = self.__to_index(position)
+    return self.__objects[index] if index >= 0 and index < len(self.__objects) else None
 
 class SquareSide(enum.Enum):
   HORIZONTAL = 0
