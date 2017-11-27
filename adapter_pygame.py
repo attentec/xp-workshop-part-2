@@ -27,9 +27,8 @@ def _load_json_document(path):
     return json.load(file)
 
 def _load_color_to_value_mapping(path, enum_class):
-  with open(path) as file:
-    document = json.load(file)
-    return { _color_tuple_from_json(color): enum_class(value) for color, value in document.items() }
+  document = _load_json_document(path)
+  return { _color_tuple_from_json(color): enum_class(value) for color, value in document.items() }
 
 def _load_map_layer(path, color_to_value):
   surface = pygame.image.load(path)
