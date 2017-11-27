@@ -2,19 +2,14 @@ import os.path
 import sys
 
 from adapter_pygame import milliseconds_since_start, load_map, load_textures, process_input, Renderer
+from adapter_zmq import ServerConnection
 from domain import Angle, Color, Direction, Input, Player, Position
 from use_case import move_player, rotate_player
 
 def main(args):
-  world_map = load_map(
-    path='world.png',
-    ceiling_color=Color(red=0x33, green=0x33, blue=0x33),
-    floor_color=Color(red=0x55, green=0x55, blue=0x55)
-  )
-  player = Player(
-    position=Position(x=22.5, y=13.5), # TODO: Find player start with a special color?
-    forward=Direction(x=-1, y=0)
-  )
+  server = ServerConnection("localhost", 12345)
+  player = server.request("new_player")
+  world_map = server.request("get_map")
 
   root = os.path.dirname(os.path.realpath(__file__))
   textures = load_textures(os.path.join(root, 'textures'))
