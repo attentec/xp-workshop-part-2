@@ -96,9 +96,6 @@ class Map:
     grid_position = position.to_grid()
     return grid_position.y*self.__width + grid_position.x
 
-  def is_empty(self, position):
-    return self.material(position) is None
-
   def material(self, position):
     index = self.__to_index(position)
     return self.__materials[index] if index >= 0 and index < len(self.__materials) else Material.VOID
@@ -163,7 +160,7 @@ def find_first_collision(map, line_segment, debug=False):
 
     position = Position(x, y)
 
-    if not map.is_empty(position):
+    if map.material(position) is not None:
       if side == SquareSide.HORIZONTAL:
         distance = abs((x - start.x + (1 - step_x) / 2) / direction.x)
         wall = start.y + distance * direction.y
