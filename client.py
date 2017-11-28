@@ -11,8 +11,8 @@ def main(args):
   world_map = load_map(path='map')
 
   root = os.path.dirname(os.path.realpath(__file__))
-  objects = load_images_for_enum(os.path.join(root, 'objects'), Object)
-  materials = load_images_for_enum(os.path.join(root, 'materials'), Material)
+  objects = load_images_for_enum(os.path.join(root, 'object'), Object)
+  materials = load_images_for_enum(os.path.join(root, 'material'), Material)
 
   renderer = Renderer(
     window_size=(640, 480),
