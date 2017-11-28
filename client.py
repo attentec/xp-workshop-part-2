@@ -3,13 +3,18 @@ import os.path
 import sys
 
 from adapter_pygame import Color, milliseconds_since_start, load_color_scheme, load_map, load_player_spawn, load_images_for_enum, process_input, Renderer
-from domain import Angle, Direction, initial_input, Material, Player, Position, Object
+from adapter_zmq import ServerConnection
+from domain import Angle, Direction, initial_input, Map, Material, Player, Position, Object
 from use_case import move_player, rotate_player
 
 def main(args):
   if args.connect:
-    raise NotImplementedError()
+    server = ServerConnection(args.connect, args.port)
+    player = server.call("new_player")
+    server.call("request_world_map")
+    world_map = Map([], [], 0)
   else:
+    server = None
     player = load_player_spawn(path='map')
     world_map = load_map(path='map')
   color_scheme = load_color_scheme(path='map')
@@ -38,6 +43,10 @@ def main(args):
   running = True
 
   while running:
+    if server:
+      for event_name, data in server.poll_events():
+        if event_name == "world_map":
+          world_map = data
     last_time = time
     time = milliseconds_since_start()
     frame_time = min(time - last_time, max_frame_time) / 1000

@@ -86,27 +86,24 @@ class Material(enum.Enum):
 class Object(enum.Enum):
   KEY = 0
 
-class Map:
-  def __init__(self, materials, objects, width):
-    self.__materials, self.__objects, self.__width = materials, objects, width
-
+class Map(collections.namedtuple('Map', 'materials, objects, width')):
   def __to_index(self, position):
     grid_position = position.to_grid()
-    return grid_position.y*self.__width + grid_position.x
+    return grid_position.y*self.width + grid_position.x
 
   def __to_position(self, index):
-    return Position(index % self.__width, int(index/self.__width))
+    return Position(index % self.width, int(index/self.width))
 
   def material(self, position):
     index = self.__to_index(position)
-    return self.__materials[index] if index >= 0 and index < len(self.__materials) else Material.VOID
+    return self.materials[index] if index >= 0 and index < len(self.materials) else Material.VOID
 
   def all_objects(self):
     square_to_center_offset = Direction(0.5, 0.5)
     objects = []
 
-    for index in range(0, len(self.__objects)):
-      object = self.__objects[index]
+    for index in range(0, len(self.objects)):
+      object = self.objects[index]
 
       if object is not None:
         position = self.__to_position(index) + square_to_center_offset
@@ -116,7 +113,7 @@ class Map:
 
   def object(self, position):
     index = self.__to_index(position)
-    return self.__objects[index] if index >= 0 and index < len(self.__objects) else None
+    return self.objects[index] if index >= 0 and index < len(self.objects) else None
 
 class SquareSide(enum.Enum):
   HORIZONTAL = 0
