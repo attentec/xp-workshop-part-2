@@ -8,6 +8,9 @@ from domain import Angle, Direction, initial_input, Map, Material, Player, Posit
 from use_case import move_player, rotate_player
 
 def main(args):
+  root = os.path.dirname(os.path.realpath(__file__))
+  map_path = os.path.join(root, 'map')
+
   if args.connect:
     server = ServerConnection(args.connect, args.port)
     player = server.call("new_player")
@@ -15,11 +18,10 @@ def main(args):
     world_map = Map([], [], 0)
   else:
     server = None
-    player = load_player_spawn(path='map')
-    world_map = load_map(path='map')
-  color_scheme = load_color_scheme(path='map')
+    player = load_player_spawn(map_path)
+    world_map = load_map(map_path)
 
-  root = os.path.dirname(os.path.realpath(__file__))
+  color_scheme = load_color_scheme(map_path)
   objects = load_images_for_enum(os.path.join(root, 'object'), Object)
   materials = load_images_for_enum(os.path.join(root, 'material'), Material)
 
