@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from domain import Angle, find_first_collision, initial_input, LineSegment, Player, Position
 
-_State = namedtuple('State', 'input, player, world_map, rotation_speed, movement_speed')
+_State = namedtuple('State', 'input, player, world_map, rotation_speed, movement_speed, other_players')
 
 def rotate_player(player, input, frame_time, speed):
   rotation_sign = (1 if input.turn_right else 0) - (1 if input.turn_left else 0)
@@ -35,7 +35,7 @@ def move_player(player, map, input, frame_time, speed):
   return player._replace(position=new_position)
 
 def initial_state(initial_input, player, world_map, rotation_speed, movement_speed):
-  return _State(initial_input, player, world_map, rotation_speed, movement_speed)
+  return _State(initial_input, player, world_map, rotation_speed, movement_speed, {})
 
 def handle_event(state, event_name, event_data):
   output_events = []
@@ -48,6 +48,16 @@ def handle_event(state, event_name, event_data):
   elif event_name == 'input':
     input = event_data
     state = state._replace(input=input)
+  elif event_name == "world_map":
+    state = state._replace(world_map=event_data)
+  elif event_name == "player":
+    other_player = event_data
+    if other_player.name != state.player.name:
+      state.other_players[other_player.name] = other_player
+  elif event_name == "player_left":
+    other_player_name == event_data
+    if other_player_name in state.other_players:
+      del state.other_players[other_player_name]
   else:
     # TODO: implement more events
     pass

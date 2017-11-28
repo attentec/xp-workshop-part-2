@@ -15,12 +15,10 @@ def main(args):
   if args.connect:
     server = ServerConnection(args.connect, args.port)
     player = server.call("join", getuser())
-    other_players = {}
     world_map = server.call("get_world_map")
   else:
     server = None
     player = load_player_spawn(map_path)
-    other_players = {}
     world_map = load_map(map_path)
 
   color_scheme = load_color_scheme(map_path)
@@ -53,15 +51,8 @@ def main(args):
 
   while running:
     if server:
-      for event_name, data in server.poll_events():
-        if event_name == "world_map":
-          state = state._replace(world_map=data)
-        if event_name == "player":
-          if data.name != player.name:
-            other_players[data.name] = data
-        if event_name == "player_left":
-          if data in other_players:
-            del other_players[data]
+      for event_name, event_data in server.poll_events():
+        state, _ = handle_event(state, event_name, event_data)
 
     last_time = time
     time = milliseconds_since_start()
@@ -71,7 +62,7 @@ def main(args):
     old_player = state.player
     state, _ = handle_event(state, 'input', input)
     state, _ = handle_event(state, 'tick', frame_time)
-    renderer.draw(color_scheme, state.world_map, state.player, other_players.values())
+    renderer.draw(color_scheme, state.world_map, state.player, state.other_players.values())
     if server and state.player != old_player:
       server.call('move', state.player)
   if server:
