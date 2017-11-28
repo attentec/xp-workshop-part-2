@@ -23,10 +23,10 @@ def _color_from_json(string):
   return Color(red=color[0], green=color[1], blue=color[2])
 
 def _position_from_json(list):
-  return Position(list[0], list[1])
+  return Position(*map(float, list))
 
 def _direction_from_json(list):
-  return Direction(list[0], list[1])
+  return Direction(*map(float, list))
 
 def _load_json_document(path):
   with open(path) as file:
