@@ -242,7 +242,7 @@ class Renderer:
 
     pygame.surfarray.blit_array(self.__screen, self.__buffer)
 
-    for (object, position) in world_map.objects:
+    for (object, position) in sorted(world_map.objects, key=lambda t: (t[1] - camera.position).length()):
       texture = self.__objects.get(object, self.__checkerboard)
       self.__draw_object(texture, position, camera)
 
@@ -255,17 +255,19 @@ class Renderer:
   def __get_vertical_span(self, distance, scale=1):
     center_y = self.__size.height / 2
 
-    line_height = scale * self.__size.height / (distance + smallest_number)
+    original_height = self.__size.height / (distance + smallest_number)
+    line_height = scale * original_height
     half_line_height = line_height / 2
+    leftovers = original_height - line_height
 
-    start = max(0, int(center_y - half_line_height))
-    end = min(int(center_y + half_line_height), self.__size.height - 1)
+    start = max(0, int(center_y - half_line_height + leftovers))
+    end = min(int(center_y + half_line_height + leftovers), self.__size.height - 1)
 
     return (start, end)
 
   def __draw_column(self, rectangle, material, use_shade, flip_texture, wall_x):
     x, y_start, height = rectangle.x, rectangle.y, rectangle.height
-    y_end = y_start + rectangle.height
+    y_end = y_start + height
 
     materials = self.__shaded_materials if use_shade else self.__materials
     texture = materials.get(material, self.__checkerboard_array)

@@ -76,12 +76,22 @@ initial_input = Input(
 class Material(enum.Enum):
   VOID = 0
   FLOOR = 1
-  DUMMY = 2,
-  DOOR = 3
+  ATTENTEC = 2
+  WALL = 3
+  DOOR = 4
+  WINDOW = 5
+  DART = 6
+  PAINTING1 = 7
+  PAINTING2 = 8
 
 @enum.unique
 class Object(enum.Enum):
   KEY = 0
+  APPLE = 1
+  DESK = 2
+  CHAIR = 3
+  COMPUTER = 4
+  PLANT = 5
 
 class Map(collections.namedtuple('Map', 'materials, objects, width')):
   def __to_index(self, position):
