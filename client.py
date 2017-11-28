@@ -71,7 +71,7 @@ def main(args):
     player = rotate_player(player, input, frame_time, rotation_speed)
     player = move_player(player, world_map, input, frame_time, movement_speed)
     renderer.draw(color_scheme, world_map, player, other_players.values())
-    if player != old_player:
+    if server and player != old_player:
       server.call('move', player)
   if server:
     server.call('leave', player.name)

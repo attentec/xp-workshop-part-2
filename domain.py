@@ -81,7 +81,8 @@ initial_input = Input(
 class Material(enum.Enum):
   VOID = 0
   FLOOR = 1
-  DUMMY = 2
+  DUMMY = 2,
+  DOOR = 3
 
 @enum.unique
 class Object(enum.Enum):
