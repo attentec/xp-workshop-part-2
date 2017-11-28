@@ -59,18 +59,22 @@ def main(args):
           if data.name != player.name:
             other_players[data.name] = data
         if event_name == "player_left":
-          del other_players[data]
+          if data in other_players:
+            del other_players[data]
 
     last_time = time
     time = milliseconds_since_start()
     frame_time = min(time - last_time, max_frame_time) / 1000
 
     (input, running) = process_input(previous_input=input)
+    old_player = player
     player = rotate_player(player, input, frame_time, rotation_speed)
     player = move_player(player, world_map, input, frame_time, movement_speed)
     renderer.draw(color_scheme, world_map, player, other_players.values())
+    if player != old_player:
+      server.call('move', player)
   if server:
-    server.call("leave", player.name)
+    server.call('leave', player.name)
 
   return 0
 

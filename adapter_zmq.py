@@ -10,6 +10,7 @@ NoneType = type(None)
 _COMMAND_TYPES = {
   'get_world_map': (NoneType, Map),
   'leave': (str, NoneType),
+  'move': (Player, NoneType),
   'new_player': (str, Player),
 }
 

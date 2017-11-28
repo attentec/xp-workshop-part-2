@@ -9,13 +9,19 @@ def initial_state(player_spawn, world_map):
 def handle_command(state, command_name, input_data):
   output_data = None
   events = []
-  if command_name == 'leave':
+  if command_name == 'get_world_map':
+    output_data = state.world_map
+  elif command_name == 'leave':
     name = input_data
+    assert name in state.players
     del state.players[name]
     events.append(('player_left', name))
     print("Player left: " + name)
-  elif command_name == 'get_world_map':
-    output_data = state.world_map
+  elif command_name == 'move':
+    player = input_data
+    assert player.name in state.players
+    state.players[player.name] = player
+    events.append(('player', player))
   elif command_name == 'new_player':
     name = input_data
     player = state.player_spawn._replace(name=name)
