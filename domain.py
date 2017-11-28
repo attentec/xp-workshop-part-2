@@ -68,7 +68,7 @@ Position = _Vector
 
 LineSegment = collections.namedtuple('LineSegment', [ 'start', 'end', ])
 Input = collections.namedtuple('Input', [ 'forward', 'backward', 'turn_left', 'turn_right', ])
-Player = collections.namedtuple('Player', [ 'position', 'forward', ])
+Player = collections.namedtuple('Player', [ 'name', 'position', 'forward', ])
 
 initial_input = Input(
   forward=False,

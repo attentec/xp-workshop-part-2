@@ -8,7 +8,7 @@ def rotate_player(player, input, frame_time, speed):
 
   rotation_delta = Angle.from_radians(rotation_sign * speed * frame_time)
   new_forward = player.forward.rotate(rotation_delta)
-  return Player(player.position, new_forward)
+  return player._replace(forward=new_forward)
 
 def _try_to_move(map, from_, to):
   return to if find_first_collision(map, LineSegment(from_, to)) is None else from_
@@ -28,4 +28,4 @@ def move_player(player, map, input, frame_time, speed):
   y_target = Position(new_position.x, new_position.y + movement_delta.y)
   new_position = _try_to_move(map, from_=new_position, to=y_target)
 
-  return Player(new_position, player.forward)
+  return player._replace(position=new_position)

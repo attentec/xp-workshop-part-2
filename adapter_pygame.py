@@ -57,7 +57,7 @@ def load_color_scheme(path):
 def load_player_spawn(path):
   spawn = _load_json_document(os.path.join(path, 'spawn.json'))
   spawn_position, spawn_forward = _position_from_json(spawn['position']), _direction_from_json(spawn['forward'])
-  return Player(spawn_position, spawn_forward)
+  return Player('steve', spawn_position, spawn_forward)
 
 def load_map(path):
   color_to_material = _load_color_to_value_mapping(os.path.join(path, 'materials.json'), Material)

@@ -8,11 +8,14 @@ from domain import Direction, Map, Material, Object, Player, Position
 NoneType = type(None)
 
 _COMMAND_TYPES = {
-  'new_player': (NoneType, Player),
-  'request_world_map': (NoneType, NoneType),
+  'get_world_map': (NoneType, Map),
+  'leave': (str, NoneType),
+  'new_player': (str, Player),
 }
 
 _EVENT_TYPES = {
+  'player': Player,
+  'player_left': str,
   'world_map': Map,
 }
 
@@ -29,7 +32,8 @@ def serialize(Type, v):
                 objects=[[serialize(Object, o), serialize(Position, p)] for o, p in v.objects],
                 width=serialize(int, v.width))
   elif Type == Player:
-    return dict(position=serialize(Position, v.position),
+    return dict(name=serialize(str, v.name),
+                position=serialize(Position, v.position),
                 forward=serialize(Direction, v.forward))
   else:
     raise Exception("Cannot serialize object of type {}".format(Type))
@@ -48,8 +52,9 @@ def deserialize(Type, v):
                  objects=[(deserialize(Object, o), deserialize(Position, p)) for o, p in v['objects']],
                  width=deserialize(int, v['width']))
   elif Type == Player:
-    result = Player(position=deserialize(Position, v['position']),
-                  forward=deserialize(Direction, v['forward']))
+    result = Player(name=deserialize(str, v['name']),
+                    position=deserialize(Position, v['position']),
+                    forward=deserialize(Direction, v['forward']))
   else:
     raise Exception("Cannot deserialize object of type {}".format(Type))
   assert isinstance(result, Type), "{} is not a {}".format(v, Type)

@@ -1,4 +1,5 @@
 import argparse
+from getpass import getuser
 import os.path
 import sys
 
@@ -13,12 +14,13 @@ def main(args):
 
   if args.connect:
     server = ServerConnection(args.connect, args.port)
-    player = server.call("new_player")
-    server.call("request_world_map")
-    world_map = Map([], [], 0)
+    player = server.call("new_player", getuser())
+    players = {}
+    world_map = server.call("get_world_map")
   else:
     server = None
     player = load_player_spawn(map_path)
+    players = {}
     world_map = load_map(map_path)
 
   color_scheme = load_color_scheme(map_path)
@@ -49,6 +51,12 @@ def main(args):
       for event_name, data in server.poll_events():
         if event_name == "world_map":
           world_map = data
+        if event_name == "player":
+          if data.name != player.name:
+            players[data.name] = data
+        if event_name == "player_left":
+          del players[data]
+
     last_time = time
     time = milliseconds_since_start()
     frame_time = min(time - last_time, max_frame_time) / 1000
@@ -57,6 +65,8 @@ def main(args):
     player = rotate_player(player, input, frame_time, rotation_speed)
     player = move_player(player, world_map, input, frame_time, movement_speed)
     renderer.draw(color_scheme, world_map, player)
+  if server:
+    server.call("leave", player.name)
 
   return 0
 
