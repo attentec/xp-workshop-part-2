@@ -28,10 +28,11 @@ def handle_command(state, command_name, input_data):
     name = input_data
     if name not in state.players:
       player = state.player_spawn._replace(name=name)
-      events.append(('player', player))
     else:
       player = state.players[name]
     state.players[name] = player
+    for player in state.players.values():
+      events.append(('player', player))
     output_data = player
     print("Player joined: " + name)
   elif command_name == 'leave':
