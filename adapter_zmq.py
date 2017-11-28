@@ -17,8 +17,6 @@ _EVENT_TYPES = {
 }
 
 def serialize(Type, v):
-  if v is None:
-    return None
   assert isinstance(v, Type), "{} is not a {}".format(v, Type)
   if Type in [float, int, NoneType, str]:
     return v
@@ -37,8 +35,6 @@ def serialize(Type, v):
     raise Exception("Cannot serialize object of type {}".format(Type))
 
 def deserialize(Type, v):
-  if v is None:
-    return None
   if Type in [float, int, NoneType, str]:
     result = v
   elif issubclass(Type, enum.Enum):
