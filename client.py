@@ -2,7 +2,7 @@ import os.path
 import sys
 
 from adapter_pygame import Color, milliseconds_since_start, load_color_scheme, load_map, load_player_spawn, load_images_for_enum, process_input, Renderer
-from domain import Angle, Direction, Input, Material, Player, Position, Object
+from domain import Angle, Direction, initial_input, Material, Player, Position, Object
 from use_case import move_player, rotate_player
 
 def main(args):
@@ -23,18 +23,13 @@ def main(args):
     far_color=Color(red=0, green=0, blue=0),
     shade_scale=0.85
   )
-  input = Input(
-    forward=False,
-    backward=False,
-    turn_left=False,
-    turn_right=False
-  )
 
   max_frame_time = 50
   rotation_speed = 3
   movement_speed = 5
 
   time = milliseconds_since_start()
+  input = initial_input
   running = True
 
   while running:

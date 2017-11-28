@@ -70,6 +70,13 @@ LineSegment = collections.namedtuple('LineSegment', [ 'start', 'end', ])
 Input = collections.namedtuple('Input', [ 'forward', 'backward', 'turn_left', 'turn_right', ])
 Player = collections.namedtuple('Player', [ 'position', 'forward', ])
 
+initial_input = Input(
+  forward=False,
+  backward=False,
+  turn_left=False,
+  turn_right=False
+)
+
 @enum.unique
 class Material(enum.Enum):
   VOID = 0
