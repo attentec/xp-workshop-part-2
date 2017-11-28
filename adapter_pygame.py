@@ -116,7 +116,7 @@ class _Camera:
     self.__fov_scale = math.tan(field_of_view.to_radians() / 2)
     self.__aspect_ratio = size.width / (size.height + smallest_number)
     self.__width = size.width
-    self.forward = player.forward
+    self.forward = player.forward.normalize()
     self.__right = Direction(-self.forward.y, self.forward.x)
 
   def direction_for_column(self, column):
@@ -125,8 +125,21 @@ class _Camera:
     direction = self.forward + self.__right*right_scale
     return direction.normalize()
 
+  def column_for_direction(self, direction_in_view_coordinates):
+    direction = direction_in_view_coordinates.normalize()
+    right_scale = direction.x / (direction.y + smallest_number)
+    normalized_x = right_scale / (self.__fov_scale * self.__aspect_ratio + smallest_number)
+    return self.__convert_normalized_coordinate_to_column(normalized_x)
+
   def __convert_column_to_normalized_coordinate(self, column):
     return (2*column) / (self.__width + smallest_number) - 1
+
+  def __convert_normalized_coordinate_to_column(self, coordinate):
+    return int((self.__width * (coordinate + 1)) / 2)
+
+  def to_view_position(self, position):
+    delta = position - self.position
+    return Position(self.__right.dot(delta), self.forward.dot(delta))
 
 def _darken_surface(surface, scale):
   copy = surface.copy()
@@ -135,12 +148,14 @@ def _darken_surface(surface, scale):
   return surface
 
 class Renderer:
-  def __init__(self, window_size, materials, objects, field_of_view, draw_distance, far_color, shade_scale):
+  def __init__(self, window_size, materials, objects, field_of_view, draw_distance, far_color, shade_scale, object_scale):
     self.__screen = pygame.display.set_mode(window_size)
     self.__size = _Size(self.__screen.get_width(), self.__screen.get_height())
     self.__buffer = numpy.zeros(window_size, dtype=numpy.uint32)
     self.__field_of_view, self.__draw_distance = field_of_view, draw_distance
     self.__far_color, self.__shade_scale = self.__screen.map_rgb(_to_pygame_color(far_color)), shade_scale
+    self.__object_scale = object_scale
+    self.__z_buffer = numpy.zeros((self.__size.width, ), dtype='float32')
 
     self.__materials = { material: self.__convert_texture_to_array(texture) for material, texture in materials.items() }
     self.__shaded_materials = { material: self.__convert_texture_to_array(_darken_surface(texture, shade_scale)) for material, texture in materials.items() }
@@ -156,6 +171,7 @@ class Renderer:
     half_height = int(self.__size.height / 2)
     self.__buffer[:, :half_height] = self.__screen.map_rgb(_to_pygame_color(color_scheme.ceiling))
     self.__buffer[:, half_height:] = self.__screen.map_rgb(_to_pygame_color(color_scheme.floor))
+    self.__z_buffer.fill(self.__draw_distance)
 
     camera = _Camera(player, self.__size, self.__field_of_view)
 
@@ -177,16 +193,22 @@ class Renderer:
           collision.side == SquareSide.VERTICAL and direction.y > 0
         wall_x = collision.wall
 
-        column = pygame.Rect(x, start, 1, end-start+1)
-        self.__draw_column(column, material, use_shade, flip_texture, wall_x)
+        if collision.distance < self.__z_buffer[x]:
+          column = pygame.Rect(x, start, 1, end-start+1)
+          self.__draw_column(column, material, use_shade, flip_texture, wall_x)
+          self.__z_buffer[x] = collision.distance
 
     pygame.surfarray.blit_array(self.__screen, self.__buffer)
+
+    for (object, position) in world_map.all_objects():
+      self.__draw_object(object, position, camera)
+
     pygame.display.flip()
 
-  def __get_vertical_span(self, distance):
+  def __get_vertical_span(self, distance, scale=1):
     center_y = self.__size.height / 2
 
-    line_height = self.__size.height / (distance + smallest_number)
+    line_height = scale * self.__size.height / (distance + smallest_number)
     half_line_height = line_height / 2
 
     start = max(0, int(center_y - half_line_height))
@@ -210,6 +232,39 @@ class Renderer:
 
     indices = numpy.linspace(0, texture_height-1, num=height, dtype=numpy.uint32)
     self.__buffer[x,y_start:y_end] = texture[indices,texture_x]
+
+  def __draw_object(self, object, position, camera):
+    view_position = camera.to_view_position(position)
+    distance = view_position.length()
+    is_behind_camera = view_position.y < 0
+
+    if is_behind_camera or distance > self.__draw_distance:
+      return
+
+    (y_start, y_end) = self.__get_vertical_span(distance, scale=self.__object_scale)
+    height = y_end - y_start
+    width = height
+
+    center_x = camera.column_for_direction(view_position)
+    half_width = int(width / 2)
+    original_start = center_x - half_width
+
+    x_start = max(0, min(self.__size.width - 1, original_start))
+    x_end = max(0, min(self.__size.width - 1, center_x + half_width))
+    x_offset = abs(original_start - x_start)
+
+    if x_start == x_end or y_start == y_end:
+      return
+
+    texture = self.__objects[object]
+    scaled_texture = pygame.transform.scale(texture, (width, height))
+
+    for i in range(x_end - x_start):
+      x = x_start + i
+
+      if distance < self.__z_buffer[x]:
+        self.__screen.blit(scaled_texture, (x, y_start), pygame.Rect(x_offset + i, 0, 1, height))
+        self.__z_buffer[x] = distance
 
 def milliseconds_since_start():
   return pygame.time.get_ticks()

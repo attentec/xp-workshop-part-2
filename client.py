@@ -21,7 +21,8 @@ def main(args):
     field_of_view=Angle.from_degrees(66),
     draw_distance=100,
     far_color=Color(red=0, green=0, blue=0),
-    shade_scale=0.85
+    shade_scale=0.85,
+    object_scale=0.75
   )
 
   max_frame_time = 50

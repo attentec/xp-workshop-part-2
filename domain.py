@@ -94,9 +94,25 @@ class Map:
     grid_position = position.to_grid()
     return grid_position.y*self.__width + grid_position.x
 
+  def __to_position(self, index):
+    return Position(index % self.__width, int(index/self.__width))
+
   def material(self, position):
     index = self.__to_index(position)
     return self.__materials[index] if index >= 0 and index < len(self.__materials) else Material.VOID
+
+  def all_objects(self):
+    square_to_center_offset = Direction(0.5, 0.5)
+    objects = []
+
+    for index in range(0, len(self.__objects)):
+      object = self.__objects[index]
+
+      if object is not None:
+        position = self.__to_position(index) + square_to_center_offset
+        objects.append((object, position))
+
+    return objects
 
   def object(self, position):
     index = self.__to_index(position)
