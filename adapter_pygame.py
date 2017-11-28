@@ -158,6 +158,16 @@ def _darken_surface(surface, scale):
   surface.fill((int_scale, int_scale, int_scale, int_scale), rect=None, special_flags=pygame.BLEND_RGBA_MULT)
   return surface
 
+def _create_checkerboard_texture():
+  size = 32
+  half_size = int(size / 2)
+  surface = pygame.Surface((size, size))
+  red = pygame.Color(255, 0, 0)
+  surface.fill(pygame.Color(255, 255, 255))
+  surface.fill(red, pygame.Rect(0, 0, half_size, half_size))
+  surface.fill(red, pygame.Rect(half_size, half_size, half_size, half_size))
+  return surface
+
 class Renderer:
   def __init__(self, window_size, materials, objects, field_of_view, draw_distance, far_color, shade_scale, object_scale):
     self.__screen = pygame.display.set_mode(window_size)
@@ -171,6 +181,8 @@ class Renderer:
     self.__materials = { material: self.__convert_texture_to_array(texture) for material, texture in materials.items() }
     self.__shaded_materials = { material: self.__convert_texture_to_array(_darken_surface(texture, shade_scale)) for material, texture in materials.items() }
     self.__objects = objects
+    self.__checkerboard = _create_checkerboard_texture()
+    self.__checkerboard_array = self.__convert_texture_to_array(self.__checkerboard)
 
   def __convert_texture_to_array(self, texture):
     texture_in_screen_color_space = texture.convert()
@@ -232,11 +244,11 @@ class Renderer:
     y_end = y_start + rectangle.height
 
     materials = self.__shaded_materials if use_shade else self.__materials
-    texture = materials[material]
+    texture = materials.get(material, self.__checkerboard_array)
     texture_width, texture_height = texture.shape
 
     normalized_x = wall_x - math.floor(wall_x)
-    texture_x = max(0, min( texture_width-1, int(normalized_x * texture_width)))
+    texture_x = max(0, min(texture_width-1, int(normalized_x * texture_width)))
 
     if flip_texture:
       texture_x = texture_width-1 - texture_x
@@ -267,7 +279,7 @@ class Renderer:
     if x_start == x_end or y_start == y_end:
       return
 
-    texture = self.__objects[object]
+    texture = self.__objects.get(object, self.__checkerboard)
     scaled_texture = pygame.transform.scale(texture, (width, height))
 
     for i in range(x_end - x_start):
