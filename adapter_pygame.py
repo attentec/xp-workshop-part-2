@@ -36,16 +36,16 @@ def _load_color_to_value_mapping(path, enum_class):
   document = _load_json_document(path)
   return { _color_tuple_from_json(color): enum_class(value) for color, value in document.items() }
 
-def _load_map_layer(path, color_to_value):
+def _load_map_layer(path, color_to_value, default):
   surface = pygame.image.load(path)
   width, height = surface.get_width(), surface.get_height()
-  layer = [ None, ] * (width * height)
+  layer = [ default, ] * (width * height)
 
   for x in range(0, width):
     for y in range(0, height):
       color = surface.get_at((x, y))
       key = (int(color.r), int(color.g), int(color.b))
-      layer[y*width + x] = color_to_value.get(key, None) if color.a > 0 else None
+      layer[y*width + x] = color_to_value.get(key, default) if color.a > 0 else default
 
   return layer, width
 
@@ -63,8 +63,19 @@ def load_map(path):
   color_to_material = _load_color_to_value_mapping(os.path.join(path, 'materials.json'), Material)
   color_to_object = _load_color_to_value_mapping(os.path.join(path, 'objects.json'), Object)
 
-  materials, width = _load_map_layer(os.path.join(path, 'materials.png'), color_to_material)
-  objects, _ = _load_map_layer(os.path.join(path, 'objects.png'), color_to_object)
+  materials, width = _load_map_layer(os.path.join(path, 'materials.png'), color_to_material, default=Material.FLOOR)
+  object_layer, object_width = _load_map_layer(os.path.join(path, 'objects.png'), color_to_object, default=None)
+
+  square_to_center_offset = Direction(0.5, 0.5)
+  objects = []
+
+  def to_position(index):
+    return Position(index % object_width, int(index/object_width))
+
+  for index, object in enumerate(object_layer):
+    if object is not None:
+      position = to_position(index) + square_to_center_offset
+      objects.append((object, position))
 
   return Map(materials, objects, width)
 
@@ -200,7 +211,7 @@ class Renderer:
 
     pygame.surfarray.blit_array(self.__screen, self.__buffer)
 
-    for (object, position) in world_map.all_objects():
+    for (object, position) in world_map.objects:
       self.__draw_object(object, position, camera)
 
     pygame.display.flip()

@@ -80,7 +80,8 @@ initial_input = Input(
 @enum.unique
 class Material(enum.Enum):
   VOID = 0
-  DUMMY = 1
+  FLOOR = 1
+  DUMMY = 2
 
 @enum.unique
 class Object(enum.Enum):
@@ -91,29 +92,9 @@ class Map(collections.namedtuple('Map', 'materials, objects, width')):
     grid_position = position.to_grid()
     return grid_position.y*self.width + grid_position.x
 
-  def __to_position(self, index):
-    return Position(index % self.width, int(index/self.width))
-
   def material(self, position):
     index = self.__to_index(position)
     return self.materials[index] if index >= 0 and index < len(self.materials) else Material.VOID
-
-  def all_objects(self):
-    square_to_center_offset = Direction(0.5, 0.5)
-    objects = []
-
-    for index in range(0, len(self.objects)):
-      object = self.objects[index]
-
-      if object is not None:
-        position = self.__to_position(index) + square_to_center_offset
-        objects.append((object, position))
-
-    return objects
-
-  def object(self, position):
-    index = self.__to_index(position)
-    return self.objects[index] if index >= 0 and index < len(self.objects) else None
 
 class SquareSide(enum.Enum):
   HORIZONTAL = 0
@@ -171,7 +152,7 @@ def find_first_collision(map, line_segment, debug=False):
 
     position = Position(x, y)
 
-    if map.material(position) is not None:
+    if map.material(position) != Material.FLOOR:
       if side == SquareSide.HORIZONTAL:
         distance = abs((x - start.x + (1 - step_x) / 2) / direction.x)
         wall = start.y + distance * direction.y

@@ -28,7 +28,7 @@ def serialize(Type, v):
     return [serialize(float, v.x), serialize(float, v.y)]
   elif Type == Map:
     return dict(materials=[serialize(Material, m) for m in v.materials],
-                objects=[serialize(Object, o) for o in v.objects],
+                objects=[[serialize(Object, o), serialize(Position, p)] for o, p in v.objects],
                 width=serialize(int, v.width))
   elif Type == Player:
     return dict(position=serialize(Position, v.position),
@@ -49,7 +49,7 @@ def deserialize(Type, v):
                   y=deserialize(float, y))
   elif Type == Map:
     result = Map(materials=[deserialize(Material, m) for m in v['materials']],
-                 objects=[deserialize(Object, m) for m in v['objects']],
+                 objects=[(deserialize(Object, o), deserialize(Position, p)) for o, p in v['objects']],
                  width=deserialize(int, v['width']))
   elif Type == Player:
     result = Player(position=deserialize(Position, v['position']),
