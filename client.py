@@ -52,7 +52,9 @@ def main(args):
   while running:
     if server:
       for event_name, event_data in server.poll_events():
-        state, _ = handle_event(state, event_name, event_data)
+        state, commands = handle_event(state, event_name, event_data)
+        for command_name, command_input in commands:
+          server.call(command_name, command_input)
 
     last_time = time
     time = milliseconds_since_start()
@@ -60,8 +62,12 @@ def main(args):
 
     (input, running) = process_input(previous_input=input)
     old_player = state.player
-    state, _ = handle_event(state, 'input', input)
-    state, _ = handle_event(state, 'tick', frame_time)
+    state, commands = handle_event(state, 'input', input)
+    for command_name, command_input in commands:
+      server.call(command_name, command_input)
+    state, commands = handle_event(state, 'tick', frame_time)
+    for command_name, command_input in commands:
+      server.call(command_name, command_input)
     renderer.draw(color_scheme, state.world_map, state.player, state.other_players.values())
     if server and state.player != old_player:
       server.call('move', state.player)

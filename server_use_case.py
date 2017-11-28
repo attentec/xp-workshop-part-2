@@ -1,15 +1,28 @@
+from domain import Material
+
 from collections import namedtuple
 from random import randint
 
-_State = namedtuple('_State', 'player_spawn, world_map, players')
+_State = namedtuple('_State', 'player_spawn, world_map, links, players')
 
-def initial_state(player_spawn, world_map):
-  return _State(player_spawn, world_map, {})
+def initial_state(player_spawn, world_map, links):
+  return _State(player_spawn, world_map, links, {})
 
 def handle_command(state, command_name, input_data):
   output_data = None
   events = []
-  if command_name == 'get_world_map':
+  if command_name == 'activate':
+    player_name = input_data
+    assert player_name in state.players
+    player = state.players[player_name]
+    key_pos = player.position.to_grid()
+    door_pos = state.links.get(key_pos, None)
+    if door_pos:
+      new_material = Material.DOOR if state.world_map.material(door_pos) == Material.FLOOR else Material.FLOOR
+      new_world_map = state.world_map.replace_material(door_pos, new_material)
+      state = state._replace(world_map=new_world_map)
+      events.append(('world_map', new_world_map))
+  elif command_name == 'get_world_map':
     output_data = state.world_map
   elif command_name == 'join':
     name = input_data

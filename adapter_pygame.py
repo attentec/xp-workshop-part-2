@@ -80,6 +80,14 @@ def load_map(path):
 
   return Map(materials, objects, width)
 
+def load_links(path):
+  links = {}
+  for link_json in _load_json_document(os.path.join(path, 'links.json')):
+    key = Position(*link_json['key'])
+    door = Position(*link_json['door'])
+    links[key] = door
+  return links
+
 def process_input(previous_input):
   running = True
   pressed_keys = {}
@@ -97,6 +105,7 @@ def process_input(previous_input):
     backward=pressed_keys.get(pygame.K_DOWN, previous_input.backward),
     turn_left=pressed_keys.get(pygame.K_LEFT, previous_input.turn_left),
     turn_right=pressed_keys.get(pygame.K_RIGHT, previous_input.turn_right),
+    activate=pressed_keys.get(pygame.K_SPACE, previous_input.activate)
   )
 
   return (input, running)

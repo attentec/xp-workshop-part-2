@@ -8,6 +8,7 @@ from domain import Direction, Map, Material, Object, Player, Position
 NoneType = type(None)
 
 _COMMAND_TYPES = {
+  'activate': (str, NoneType),
   'get_world_map': (NoneType, Map),
   'join': (str, Player),
   'leave': (str, NoneType),

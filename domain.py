@@ -23,16 +23,7 @@ class Angle:
   def to_degrees(self):
     return (180 * self.__radians) / math.pi
 
-class _Vector:
-  def __init__(self, x, y):
-    self.x, self.y = x, y
-
-  def __str__(self):
-    return '(x=%f, y=%f)' % (self.x, self.y)
-
-  def __repr__(self):
-    return '_Vector(x=%f, y=%f)' % (self.x, self.y)
-
+class _Vector(collections.namedtuple('_Vector', 'x, y')):
   def __add__(self, v):
     return _Vector(self.x + v.x, self.y + v.y)
 
@@ -70,14 +61,15 @@ Direction = _Vector
 Position = _Vector
 
 LineSegment = collections.namedtuple('LineSegment', [ 'start', 'end', ])
-Input = collections.namedtuple('Input', [ 'forward', 'backward', 'turn_left', 'turn_right', ])
+Input = collections.namedtuple('Input', [ 'forward', 'backward', 'turn_left', 'turn_right', 'activate', ])
 Player = collections.namedtuple('Player', [ 'name', 'position', 'forward', ])
 
 initial_input = Input(
   forward=False,
   backward=False,
   turn_left=False,
-  turn_right=False
+  turn_right=False,
+  activate=False
 )
 
 @enum.unique
@@ -99,6 +91,12 @@ class Map(collections.namedtuple('Map', 'materials, objects, width')):
   def material(self, position):
     index = self.__to_index(position)
     return self.materials[index] if index >= 0 and index < len(self.materials) else Material.VOID
+
+  def replace_material(self, position, replacement):
+    index = self.__to_index(position)
+    new_materials = list(self.materials)
+    new_materials[index] = replacement
+    return self._replace(materials=new_materials)
 
 class SquareSide(enum.Enum):
   HORIZONTAL = 0
