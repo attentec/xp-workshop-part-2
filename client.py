@@ -1,3 +1,4 @@
+import argparse
 import os.path
 import sys
 
@@ -6,9 +7,12 @@ from domain import Angle, Direction, initial_input, Material, Player, Position, 
 from use_case import move_player, rotate_player
 
 def main(args):
+  if args.connect:
+    raise NotImplementedError()
+  else:
+    player = load_player_spawn(path='map')
+    world_map = load_map(path='map')
   color_scheme = load_color_scheme(path='map')
-  player = load_player_spawn(path='map')
-  world_map = load_map(path='map')
 
   root = os.path.dirname(os.path.realpath(__file__))
   objects = load_images_for_enum(os.path.join(root, 'object'), Object)
@@ -46,4 +50,8 @@ def main(args):
   return 0
 
 if __name__ == '__main__':
-  sys.exit(main(sys.argv[1:]))
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--connect")
+  parser.add_argument("--port", type=int, default=12345)
+  args = parser.parse_args()
+  sys.exit(main(args))
