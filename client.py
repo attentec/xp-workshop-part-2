@@ -14,7 +14,7 @@ def main(args):
 
   if args.connect:
     server = ServerConnection(args.connect, args.port)
-    player = server.call("new_player", getuser())
+    player = server.call("join", getuser())
     other_players = {}
     world_map = server.call("get_world_map")
   else:

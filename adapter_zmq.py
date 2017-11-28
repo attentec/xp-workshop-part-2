@@ -9,9 +9,9 @@ NoneType = type(None)
 
 _COMMAND_TYPES = {
   'get_world_map': (NoneType, Map),
+  'join': (str, Player),
   'leave': (str, NoneType),
   'move': (Player, NoneType),
-  'new_player': (str, Player),
 }
 
 _EVENT_TYPES = {
