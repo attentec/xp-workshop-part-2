@@ -93,7 +93,7 @@ def load_images_for_enum(directory, enum):
   images = {}
 
   for instance in enum:
-    filename = '%s.png' % str(instance.value)
+    filename = '%s.png' % str(instance.name.lower())
     path = os.path.join(directory, filename)
     images[instance] = pygame.image.load(path)
 
