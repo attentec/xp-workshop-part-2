@@ -30,6 +30,9 @@ class _Vector:
   def __str__(self):
     return '(x=%f, y=%f)' % (self.x, self.y)
 
+  def __repr__(self):
+    return '_Vector(x=%f, y=%f)' % (self.x, self.y)
+
   def __add__(self, v):
     return _Vector(self.x + v.x, self.y + v.y)
 

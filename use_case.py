@@ -1,4 +1,8 @@
-from domain import Angle, find_first_collision, LineSegment, Player, Position
+from collections import namedtuple
+
+from domain import Angle, find_first_collision, initial_input, LineSegment, Player, Position
+
+_State = namedtuple('State', 'input, player, world_map, rotation_speed, movement_speed')
 
 def rotate_player(player, input, frame_time, speed):
   rotation_sign = (1 if input.turn_right else 0) - (1 if input.turn_left else 0)
@@ -29,3 +33,22 @@ def move_player(player, map, input, frame_time, speed):
   new_position = _try_to_move(map, from_=new_position, to=y_target)
 
   return player._replace(position=new_position)
+
+def initial_state(initial_input, player, world_map, rotation_speed, movement_speed):
+  return _State(initial_input, player, world_map, rotation_speed, movement_speed)
+
+def handle_event(state, event_name, event_data):
+  output_events = []
+  if event_name == 'tick':
+    frame_time = event_data
+    player = state.player
+    player = rotate_player(player, state.input, frame_time, state.rotation_speed)
+    player = move_player(player, state.world_map, state.input, frame_time, state.movement_speed)
+    state = state._replace(player=player)
+  elif event_name == 'input':
+    input = event_data
+    state = state._replace(input=input)
+  else:
+    # TODO: implement more events
+    pass
+  return state, output_events
