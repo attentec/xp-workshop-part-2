@@ -1,8 +1,8 @@
 import os.path
 import sys
 
-from adapter_pygame import milliseconds_since_start, load_map, load_images_for_enum, process_input, Renderer
-from domain import Angle, Color, Direction, Input, Material, Player, Position, Object
+from adapter_pygame import Color, milliseconds_since_start, load_map, load_images_for_enum, process_input, Renderer
+from domain import Angle, Direction, Input, Material, Player, Position, Object
 from use_case import move_player, rotate_player
 
 def main(args):

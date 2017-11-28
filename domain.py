@@ -23,13 +23,6 @@ class Angle:
   def to_degrees(self):
     return (180 * self.__radians) / math.pi
 
-class Color:
-  def __init__(self, red, green, blue, alpha=255):
-    self.red, self.green, self.blue, self.alpha = (red, green, blue, alpha)
-
-  def __str__(self):
-    return '(red=%d, green=%d, blue=%d, alpha=%d)' % (self.red, self.green, self.blue, self.alpha)
-
 class _Vector:
   def __init__(self, x, y):
     self.x, self.y = x, y
@@ -90,7 +83,6 @@ class Map:
   def __init__(self, spawn_position, spawn_forward, ceiling_color, floor_color, materials, objects, width):
     self.spawn_position, self.spawn_forward = spawn_position, spawn_forward
     self.ceiling_color, self.floor_color = ceiling_color, floor_color
-    self.__outside_color = Color(0, 0, 0)
     self.__materials, self.__objects, self.__width = materials, objects, width
 
   def __to_index(self, position):

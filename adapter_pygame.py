@@ -5,7 +5,7 @@ import numpy
 import os.path
 import pygame
 
-from domain import Color, Direction, smallest_number, find_first_collision, Input, LineSegment, Map, Material, Object, Position, SquareSide
+from domain import Direction, smallest_number, find_first_collision, Input, LineSegment, Map, Material, Object, Position, SquareSide
 
 pygame.init()
 
@@ -96,6 +96,13 @@ def load_images_for_enum(directory, enum):
   return images
 
 _Size = collections.namedtuple('_Size', [ 'width', 'height', ])
+
+class Color:
+  def __init__(self, red, green, blue, alpha=255):
+    self.red, self.green, self.blue, self.alpha = (red, green, blue, alpha)
+
+  def __str__(self):
+    return '(red=%d, green=%d, blue=%d, alpha=%d)' % (self.red, self.green, self.blue, self.alpha)
 
 class _Camera:
   def __init__(self, player, size, field_of_view):
