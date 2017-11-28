@@ -5,7 +5,7 @@ import numpy
 import os.path
 import pygame
 
-from domain import Direction, smallest_number, find_first_collision, Input, LineSegment, Map, Material, Object, Position, SquareSide
+from domain import Direction, smallest_number, find_first_collision, Input, LineSegment, Map, Material, Object, Player, Position, SquareSide
 
 pygame.init()
 
@@ -49,20 +49,24 @@ def _load_map_layer(path, color_to_value):
 
   return layer, width
 
-def load_map(path):
+def load_color_scheme(path):
   colors = _load_json_document(os.path.join(path, 'colors.json'))
   ceiling_color, floor_color = _color_from_json(colors['ceiling']), _color_from_json(colors['floor'])
+  return ColorScheme(ceiling_color, floor_color)
 
+def load_player_spawn(path):
   spawn = _load_json_document(os.path.join(path, 'spawn.json'))
   spawn_position, spawn_forward = _position_from_json(spawn['position']), _direction_from_json(spawn['forward'])
+  return Player(spawn_position, spawn_forward)
 
+def load_map(path):
   color_to_material = _load_color_to_value_mapping(os.path.join(path, 'materials.json'), Material)
   color_to_object = _load_color_to_value_mapping(os.path.join(path, 'objects.json'), Object)
 
   materials, width = _load_map_layer(os.path.join(path, 'materials.png'), color_to_material)
   objects, _ = _load_map_layer(os.path.join(path, 'objects.png'), color_to_object)
 
-  return Map(spawn_position, spawn_forward, ceiling_color, floor_color, materials, objects, width)
+  return Map(materials, objects, width)
 
 def process_input(previous_input):
   running = True
@@ -103,6 +107,8 @@ class Color:
 
   def __str__(self):
     return '(red=%d, green=%d, blue=%d, alpha=%d)' % (self.red, self.green, self.blue, self.alpha)
+
+ColorScheme = collections.namedtuple('ColorScheme', [ 'ceiling', 'floor' ])
 
 class _Camera:
   def __init__(self, player, size, field_of_view):
@@ -146,10 +152,10 @@ class Renderer:
     transposed = mapped_colors.T
     return transposed
 
-  def draw(self, world_map, player):
+  def draw(self, color_scheme, world_map, player):
     half_height = int(self.__size.height / 2)
-    self.__buffer[:, :half_height] = self.__screen.map_rgb(_to_pygame_color(world_map.ceiling_color))
-    self.__buffer[:, half_height:] = self.__screen.map_rgb(_to_pygame_color(world_map.floor_color))
+    self.__buffer[:, :half_height] = self.__screen.map_rgb(_to_pygame_color(color_scheme.ceiling))
+    self.__buffer[:, half_height:] = self.__screen.map_rgb(_to_pygame_color(color_scheme.floor))
 
     camera = _Camera(player, self.__size, self.__field_of_view)
 

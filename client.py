@@ -1,13 +1,14 @@
 import os.path
 import sys
 
-from adapter_pygame import Color, milliseconds_since_start, load_map, load_images_for_enum, process_input, Renderer
+from adapter_pygame import Color, milliseconds_since_start, load_color_scheme, load_map, load_player_spawn, load_images_for_enum, process_input, Renderer
 from domain import Angle, Direction, Input, Material, Player, Position, Object
 from use_case import move_player, rotate_player
 
 def main(args):
+  color_scheme = load_color_scheme(path='map')
+  player = load_player_spawn(path='map')
   world_map = load_map(path='map')
-  player = Player(position=world_map.spawn_position, forward=world_map.spawn_forward)
 
   root = os.path.dirname(os.path.realpath(__file__))
   objects = load_images_for_enum(os.path.join(root, 'objects'), Object)
@@ -44,7 +45,7 @@ def main(args):
     (input, running) = process_input(previous_input=input)
     player = rotate_player(player, input, frame_time, rotation_speed)
     player = move_player(player, world_map, input, frame_time, movement_speed)
-    renderer.draw(world_map, player)
+    renderer.draw(color_scheme, world_map, player)
 
   return 0
 

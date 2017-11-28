@@ -80,9 +80,7 @@ class Object(enum.Enum):
   KEY = 0
 
 class Map:
-  def __init__(self, spawn_position, spawn_forward, ceiling_color, floor_color, materials, objects, width):
-    self.spawn_position, self.spawn_forward = spawn_position, spawn_forward
-    self.ceiling_color, self.floor_color = ceiling_color, floor_color
+  def __init__(self, materials, objects, width):
     self.__materials, self.__objects, self.__width = materials, objects, width
 
   def __to_index(self, position):
