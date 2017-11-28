@@ -3,7 +3,7 @@ from getpass import getuser
 import os.path
 import sys
 
-from adapter_pygame import Color, milliseconds_since_start, load_color_scheme, load_map, load_player_spawn, load_images_for_enum, process_input, Renderer
+from adapter_pygame import Color, milliseconds_since_start, load_color_scheme, load_font, load_image, load_map, load_player_spawn, load_images_for_enum, process_input, Renderer
 from adapter_zmq import ServerConnection
 from domain import Angle, Direction, initial_input, Map, Material, Player, Position, Object
 from use_case import move_player, rotate_player
@@ -15,22 +15,26 @@ def main(args):
   if args.connect:
     server = ServerConnection(args.connect, args.port)
     player = server.call("new_player", getuser())
-    players = {}
+    other_players = {}
     world_map = server.call("get_world_map")
   else:
     server = None
     player = load_player_spawn(map_path)
-    players = {}
+    other_players = {}
     world_map = load_map(map_path)
 
   color_scheme = load_color_scheme(map_path)
   objects = load_images_for_enum(os.path.join(root, 'object'), Object)
   materials = load_images_for_enum(os.path.join(root, 'material'), Material)
+  player_texture = load_image(os.path.join(root, 'player.png'))
+  font = load_font(os.path.join(root, 'font', 'league_mono', 'LeagueMono-Light.otf'), size=18)
 
   renderer = Renderer(
     window_size=(640, 480),
     materials=materials,
     objects=objects,
+    player_texture=player_texture,
+    font=font,
     field_of_view=Angle.from_degrees(66),
     draw_distance=100,
     far_color=Color(red=0, green=0, blue=0),
@@ -53,9 +57,9 @@ def main(args):
           world_map = data
         if event_name == "player":
           if data.name != player.name:
-            players[data.name] = data
+            other_players[data.name] = data
         if event_name == "player_left":
-          del players[data]
+          del other_players[data]
 
     last_time = time
     time = milliseconds_since_start()
@@ -64,7 +68,7 @@ def main(args):
     (input, running) = process_input(previous_input=input)
     player = rotate_player(player, input, frame_time, rotation_speed)
     player = move_player(player, world_map, input, frame_time, movement_speed)
-    renderer.draw(color_scheme, world_map, player)
+    renderer.draw(color_scheme, world_map, player, other_players.values())
   if server:
     server.call("leave", player.name)
 

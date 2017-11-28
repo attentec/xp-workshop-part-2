@@ -8,6 +8,7 @@ import pygame
 from domain import Direction, smallest_number, find_first_collision, Input, LineSegment, Map, Material, Object, Player, Position, SquareSide
 
 pygame.init()
+pygame.font.init()
 
 def _to_pygame_color(local_color):
   return pygame.Color(local_color.red, local_color.green, local_color.blue, local_color.alpha)
@@ -100,15 +101,21 @@ def process_input(previous_input):
 
   return (input, running)
 
+def load_image(path):
+  return pygame.image.load(path)
+
 def load_images_for_enum(directory, enum):
   images = {}
 
   for instance in enum:
     filename = '%s.png' % str(instance.name.lower())
     path = os.path.join(directory, filename)
-    images[instance] = pygame.image.load(path)
+    images[instance] = load_image(path)
 
   return images
+
+def load_font(path, size):
+  return pygame.font.Font(path, size)
 
 _Size = collections.namedtuple('_Size', [ 'width', 'height', ])
 
@@ -169,18 +176,21 @@ def _create_checkerboard_texture():
   return surface
 
 class Renderer:
-  def __init__(self, window_size, materials, objects, field_of_view, draw_distance, far_color, shade_scale, object_scale):
+  def __init__(self, window_size, materials, objects, player_texture, font, field_of_view, draw_distance, far_color, shade_scale, object_scale):
     self.__screen = pygame.display.set_mode(window_size)
     self.__size = _Size(self.__screen.get_width(), self.__screen.get_height())
     self.__buffer = numpy.zeros(window_size, dtype=numpy.uint32)
     self.__field_of_view, self.__draw_distance = field_of_view, draw_distance
     self.__far_color, self.__shade_scale = self.__screen.map_rgb(_to_pygame_color(far_color)), shade_scale
     self.__object_scale = object_scale
+    self.__font = font
     self.__z_buffer = numpy.zeros((self.__size.width, ), dtype='float32')
 
     self.__materials = { material: self.__convert_texture_to_array(texture) for material, texture in materials.items() }
     self.__shaded_materials = { material: self.__convert_texture_to_array(_darken_surface(texture, shade_scale)) for material, texture in materials.items() }
     self.__objects = objects
+    self.__player_texture = player_texture
+
     self.__checkerboard = _create_checkerboard_texture()
     self.__checkerboard_array = self.__convert_texture_to_array(self.__checkerboard)
 
@@ -190,7 +200,7 @@ class Renderer:
     transposed = mapped_colors.T
     return transposed
 
-  def draw(self, color_scheme, world_map, player):
+  def draw(self, color_scheme, world_map, player, other_players):
     half_height = int(self.__size.height / 2)
     self.__buffer[:, :half_height] = self.__screen.map_rgb(_to_pygame_color(color_scheme.ceiling))
     self.__buffer[:, half_height:] = self.__screen.map_rgb(_to_pygame_color(color_scheme.floor))
@@ -224,7 +234,12 @@ class Renderer:
     pygame.surfarray.blit_array(self.__screen, self.__buffer)
 
     for (object, position) in world_map.objects:
-      self.__draw_object(object, position, camera)
+      texture = self.__objects.get(object, self.__checkerboard)
+      self.__draw_object(texture, position, camera)
+
+    for player in other_players:
+      self.__draw_object(self.__player_texture, player.position, camera)
+      self.__draw_text(player.name, player.position, camera)
 
     pygame.display.flip()
 
@@ -256,7 +271,7 @@ class Renderer:
     indices = numpy.linspace(0, texture_height-1, num=height, dtype=numpy.uint32)
     self.__buffer[x,y_start:y_end] = texture[indices,texture_x]
 
-  def __draw_object(self, object, position, camera):
+  def __draw_object(self, texture, position, camera):
     view_position = camera.to_view_position(position)
     distance = view_position.length()
     is_behind_camera = view_position.y < 0
@@ -279,7 +294,6 @@ class Renderer:
     if x_start == x_end or y_start == y_end:
       return
 
-    texture = self.__objects.get(object, self.__checkerboard)
     scaled_texture = pygame.transform.scale(texture, (width, height))
 
     for i in range(x_end - x_start):
@@ -288,6 +302,31 @@ class Renderer:
       if distance < self.__z_buffer[x]:
         self.__screen.blit(scaled_texture, (x, y_start), pygame.Rect(x_offset + i, 0, 1, height))
         self.__z_buffer[x] = distance
+
+  def __draw_text(self, string, position, camera):
+    view_position = camera.to_view_position(position)
+    distance = view_position.length()
+    is_behind_camera = view_position.y < 0
+
+    if is_behind_camera or distance > min(7, self.__draw_distance):
+      return
+
+    column = camera.column_for_direction(view_position)
+
+    if column < 0 or column >= self.__size.width:
+      return
+
+    foreground = pygame.Color(255, 255, 255)
+    background = pygame.Color(50, 50, 50)
+
+    text = self.__font.render(string, 1, foreground, background)
+    distance_in_front_of_other_objects = distance - 1e-3
+
+    if distance_in_front_of_other_objects < self.__z_buffer[column]:
+      x = column - int(text.get_width() / 2)
+      half_height = int(self.__size.height / 2)
+      self.__screen.blit(text, (x, half_height))
+      self.__z_buffer[column] = distance_in_front_of_other_objects
 
 def milliseconds_since_start():
   return pygame.time.get_ticks()
