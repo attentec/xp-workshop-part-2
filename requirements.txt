@@ -1,0 +1,5 @@
+numpy==1.13.3
+pygame==1.9.3
+pyzmq==17.0.0b3
+pytest==3.3.0
+pytest-watch==4.1.0
