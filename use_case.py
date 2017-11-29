@@ -44,7 +44,11 @@ def handle_event(state, event_name, event_data):
     player = state.player
     player = rotate_player(player, state.input, frame_time, state.rotation_speed)
     player = move_player(player, state.world_map, state.input, frame_time, state.movement_speed)
+    if player != state.player:
+      commands.append(('move', player))
     state = state._replace(player=player)
+  elif event_name == 'exit':
+    commands.append(('leave', state.player.name))
   elif event_name == 'input':
     new_input = event_data
     if new_input.activate and not state.input.activate:

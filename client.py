@@ -49,6 +49,13 @@ def main(args):
   state = initial_state(input, player, world_map, rotation_speed, movement_speed)
   running = True
 
+  def interact(command_name, command_data):
+    nonlocal state
+    state, commands = handle_event(state, command_name, command_data)
+    if server:
+      for command_name, command_input in commands:
+        server.call(command_name, command_input)
+
   while running:
     if server:
       for event_name, event_data in server.poll_events():
@@ -61,18 +68,10 @@ def main(args):
     frame_time = min(time - last_time, max_frame_time) / 1000
 
     (input, running) = process_input(previous_input=input)
-    old_player = state.player
-    state, commands = handle_event(state, 'input', input)
-    for command_name, command_input in commands:
-      server.call(command_name, command_input)
-    state, commands = handle_event(state, 'tick', frame_time)
-    for command_name, command_input in commands:
-      server.call(command_name, command_input)
+    interact('input', input)
+    interact('tick', frame_time)
     renderer.draw(color_scheme, state.world_map, state.player, state.other_players.values())
-    if server and state.player != old_player:
-      server.call('move', state.player)
-  if server:
-    server.call('leave', state.player.name)
+  interact('exit', None)
 
   return 0
 
