@@ -37,7 +37,9 @@ First you need to install Python and some tools and libraries. Do this once.
     * `source env/bin/activate`
   * Windows:
     * `env/Scripts/activate.bat`
-* Then run the client like this: `python client.py`
+* Run unit tests like this: `pytest`
+* Then run the client in offline mode like this: `python client.py`
+* When that works, you can run the client in online mode: `python client.py --connect <server-ip>`
 
 ## Development
 
