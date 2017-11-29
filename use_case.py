@@ -61,7 +61,7 @@ def handle_event(state, event_name, event_data):
     if other_player.name != state.player.name:
       state.other_players[other_player.name] = other_player
   elif event_name == 'player_left':
-    other_player_name == event_data
+    other_player_name = event_data
     if other_player_name in state.other_players:
       del state.other_players[other_player_name]
   else:
